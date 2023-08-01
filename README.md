@@ -1,2 +1,2 @@
 # GO-sem-sim
-A python script that, given the whole Gene Ont
+A python script that, given the whole [Gene Ontology basic obo file](https://current.geneontology.org/ontology/go-basic.obo) and the [human gaf file](https://ftp.ebi.ac.uk/pub/databases/GO/goa/HUMAN/) first appoints each human Gene Ontology term to one of three dictionaries (P = Biological Process, F = Molecular Function, C = Cellular Component). Afterwords, it reduces the GO terms for each gene by calculating the Reskind semantic similarity metric by pairwise comparing the semantic similarity of the GO terms associated with each gene.
