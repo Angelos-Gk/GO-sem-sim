@@ -73,7 +73,7 @@ get_level <- function(go_term) {
 
 #===================== SEMANTIC SIMILARITY ===============================
 
-# Create GOSemSimData object from the GO graph
+# Create GOSemSimData object 
 go_sem_data <- godata("org.Hs.eg.db", ont = "BP", computeIC = TRUE)
 
 # Create a list to store reduced annotations
