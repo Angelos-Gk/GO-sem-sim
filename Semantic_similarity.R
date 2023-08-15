@@ -1,5 +1,7 @@
 # setwd("C:/Users/angel/Desktop/Applied Bioinformatics/thesis/pleiotropy/R")
 
+start.time <- Sys.time()
+
 #===================== SETTING UP ===============================
 # Load required libraries
 library(GO.db)
@@ -76,16 +78,19 @@ get_level <- function(go_term) {
 # Create GOSemSimData object 
 go_sem_data <- godata("org.Hs.eg.db", ont = "BP", computeIC = TRUE)
 
-# Create a list to store reduced annotations
-reduced_grouped_annotations <- list()
+# Create a new object called clean_data_sub and subset only the desired dataframes (quick testing)
+#clean_data_sub <- clean_data[c("A0A087WXM9", "A0A024RBG1", "A0A075B6H5")]
 
-# Iterate through each ID and perform the reduction process
+# Create a new list to store filtered GO terms for each ID
+filtered_terms_list <- list()
+
+# Iterate through each ID and filter GO terms
 for (target_id in names(clean_data)) {
   annotations_for_id <- clean_data[[target_id]]
   
   # If there's only one GO term, keep it
   if (nrow(annotations_for_id) == 1) {
-    reduced_grouped_annotations[[target_id]] <- annotations_for_id
+    filtered_terms_list[[target_id]] <- annotations_for_id$GO_ID
     next
   }
   
@@ -96,14 +101,14 @@ for (target_id in names(clean_data)) {
   
   for (i in 1:(n - 1)) {
     for (j in (i + 1):n) {
-      sim <- mgoSim(go_terms[i], go_terms[j], semData = go_sem_data, measure = "Wang")
+      sim <- goSim(go_terms[i], go_terms[j], semData = go_sem_data, measure = "Resnik")
       sim_matrix[i, j] <- sim
       sim_matrix[j, i] <- sim
     }
   }
   
   # Apply the reduction criteria
-  reduced_terms <- character(0)
+  kept_terms <- character(0)
   used_indices <- c()
   for (i in 1:n) {
     if (i %in% used_indices) {
@@ -112,21 +117,20 @@ for (target_id in names(clean_data)) {
     
     sim_row <- sim_matrix[i, ]
     similar_indices <- which(sim_row >= 0.5)
-    similar_levels <- sapply(similar_indices, function(index) get_level(go_terms[index]))
-    similar_and_same_level <- similar_indices[similar_levels == get_level(go_terms[i])]
+    similar_levels <- sapply(similar_indices, function(index) go_levels[go_terms[index]])
+    similar_and_same_level <- similar_indices[similar_levels == go_levels[go_terms[i]]]
     
     if (length(similar_and_same_level) > 0) {
       selected_index <- sample(c(i, similar_and_same_level), 1)
       used_indices <- c(used_indices, similar_and_same_level[similar_and_same_level != selected_index])
-      reduced_terms <- c(reduced_terms, go_terms[selected_index])
+      kept_terms <- c(kept_terms, go_terms[selected_index])
     } else {
-      reduced_terms <- c(reduced_terms, go_terms[i])
+      kept_terms <- c(kept_terms, go_terms[i])
     }
   }
   
-  # Remove duplicates and store the reduced terms
-  reduced_terms <- unique(reduced_terms)
-  reduced_grouped_annotations[[target_id]] <- data.frame(DB_Object_ID = target_id, GO_ID = reduced_terms)
+  # Remove duplicates and store the kept terms
+  filtered_terms_list[[target_id]] <- unique(kept_terms)
 }
 
 #===================== TESTING =============================== 
@@ -136,14 +140,18 @@ for (target_id in names(clean_data)) {
 
 # Testing
 clean_data$A0A087WXM9$GO_ID
-reduced_grouped_annotations$A0A087WXM9$GO_ID
+filtered_terms_list$A0A087WXM9
 
 # Testing 
 clean_data$A0A024RBG1$GO_ID
-reduced_grouped_annotations$A0A024RBG1$GO_ID
+filtered_terms_list$A0A024RBG1
 
 # Testing
 clean_data$A0A075B6H5$GO_ID
-reduced_grouped_annotations$A0A075B6H5$GO_ID
+filtered_terms_list$A0A075B6H5
 
 sessionInfo()
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
