@@ -86,7 +86,13 @@ go_sem_data <- godata("org.Hs.eg.db", ont = "BP", computeIC = TRUE)
 filtered_terms_list <- list()
 
 # Initialize the progress bar
-pb <- progress_bar$new(format = "[:bar] :percent :current/:total ids processed", total = length(names(clean_data)))
+pb <- progress_bar$new(
+  format = "[:bar] :percent :current/:total ids processed, Elapsed: :elapsedfull ETA: :eta",
+  total = length(names(clean_data))
+)
+
+# Get the start time
+start_time <- Sys.time()
 
 # Iterate through each ID and filter GO terms
 for (target_id in names(clean_data)) {
@@ -140,8 +146,8 @@ for (target_id in names(clean_data)) {
   pb$tick()  # Update the progress bar
 }
 
-# Finalize the progress bar
-pb$close()
+# Terminate the progress bar
+pb$terminate()
 
 #===================== TESTING =============================== 
 
@@ -165,3 +171,4 @@ sessionInfo()
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
+
