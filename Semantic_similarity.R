@@ -101,7 +101,7 @@ for (target_id in names(clean_data)) {
   
   for (i in 1:(n - 1)) {
     for (j in (i + 1):n) {
-      sim <- goSim(go_terms[i], go_terms[j], semData = go_sem_data, measure = "Resnik")
+      sim <- goSim(go_terms[i], go_terms[j], semData = go_sem_data, measure = "Wang")
       sim_matrix[i, j] <- sim
       sim_matrix[j, i] <- sim
     }
