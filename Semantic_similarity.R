@@ -9,6 +9,7 @@ library(AnnotationDbi)
 library(ontologyIndex)
 library(ontologySimilarity)
 library(GOSemSim)
+library(progress)
 
 # Load the GO OBO file and create a GO graph
 go_obo_file <- "C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/python/go-basic.obo"
@@ -84,6 +85,9 @@ go_sem_data <- godata("org.Hs.eg.db", ont = "BP", computeIC = TRUE)
 # Create a new list to store filtered GO terms for each ID
 filtered_terms_list <- list()
 
+# Initialize the progress bar
+pb <- progress_bar$new(format = "[:bar] :percent :current/:total ids processed", total = length(names(clean_data)))
+
 # Iterate through each ID and filter GO terms
 for (target_id in names(clean_data)) {
   annotations_for_id <- clean_data[[target_id]]
@@ -91,6 +95,7 @@ for (target_id in names(clean_data)) {
   # If there's only one GO term, keep it
   if (nrow(annotations_for_id) == 1) {
     filtered_terms_list[[target_id]] <- annotations_for_id$GO_ID
+    pb$tick()  # Update the progress bar
     next
   }
   
@@ -131,7 +136,12 @@ for (target_id in names(clean_data)) {
   
   # Remove duplicates and store the kept terms
   filtered_terms_list[[target_id]] <- unique(kept_terms)
+  
+  pb$tick()  # Update the progress bar
 }
+
+# Finalize the progress bar
+pb$close()
 
 #===================== TESTING =============================== 
 
