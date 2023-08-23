@@ -152,7 +152,7 @@ pb$terminate()
 #===================== TESTING =============================== 
 
 # In order to test, paste the clean data to revigo (http://revigo.irb.hr/) and compare results with 
-# the reduced_grouped_annotations results for each ID
+# the filtered_terms_list results for each ID
 
 # Testing
 clean_data$A0A087WXM9$GO_ID
