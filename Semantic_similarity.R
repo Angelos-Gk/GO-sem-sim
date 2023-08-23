@@ -114,7 +114,7 @@ for (target_id in names(clean_data)) {
     for (j in (i + 1):n) {
       sim <- goSim(go_terms[i], go_terms[j], semData = go_sem_data, measure = "Wang")
       sim_matrix[i, j] <- sim
-      sim_matrix[j, i] <- sim
+      #sim_matrix[j, i] <- sim
     }
   }
   
@@ -127,11 +127,13 @@ for (target_id in names(clean_data)) {
     }
     
     sim_row <- sim_matrix[i, ]
-    similar_indices <- which(sim_row >= 0.5)
+    similar_indices <- which(sim_row >= 0.4)
     similar_levels <- sapply(similar_indices, function(index) go_levels[go_terms[index]])
     similar_and_same_level <- similar_indices[similar_levels == go_levels[go_terms[i]]]
     
     if (length(similar_and_same_level) > 0) {
+      # Set a seed for reproducibility
+      #set.seed(124)
       selected_index <- sample(c(i, similar_and_same_level), 1)
       used_indices <- c(used_indices, similar_and_same_level[similar_and_same_level != selected_index])
       kept_terms <- c(kept_terms, go_terms[selected_index])
@@ -152,7 +154,7 @@ pb$terminate()
 #===================== TESTING =============================== 
 
 # In order to test, paste the clean data to revigo (http://revigo.irb.hr/) and compare results with 
-# the filtered_terms_list results for each ID
+# the reduced_grouped_annotations results for each ID
 
 # Testing
 clean_data$A0A087WXM9$GO_ID
@@ -171,4 +173,3 @@ sessionInfo()
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
-
