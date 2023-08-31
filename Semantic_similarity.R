@@ -114,7 +114,6 @@ for (target_id in names(clean_data)) {
     for (j in (i + 1):n) {
       sim <- goSim(go_terms[i], go_terms[j], semData = go_sem_data, measure = "Wang")
       sim_matrix[i, j] <- sim
-      #sim_matrix[j, i] <- sim
     }
   }
   
@@ -132,8 +131,6 @@ for (target_id in names(clean_data)) {
     similar_and_same_level <- similar_indices[similar_levels == go_levels[go_terms[i]]]
     
     if (length(similar_and_same_level) > 0) {
-      # Set a seed for reproducibility
-      #set.seed(124)
       selected_index <- sample(c(i, similar_and_same_level), 1)
       used_indices <- c(used_indices, similar_and_same_level[similar_and_same_level != selected_index])
       kept_terms <- c(kept_terms, go_terms[selected_index])
