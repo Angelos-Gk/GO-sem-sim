@@ -1,5 +1,6 @@
 
 #================= SAVE THE OUTPUT =========
+
 # Initialize an empty character vector to store the results
 results <- character()
 
@@ -36,8 +37,6 @@ total_go_ids <- sum(sapply(go_id_counts, sum))
 
 # Print the counts and total
 cat("Total number of GO IDs (before correction):", total_go_ids)
-
-# ============================================
 
 # AFTER REDUCTION
 
