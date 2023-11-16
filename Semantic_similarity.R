@@ -95,8 +95,17 @@ get_level <- function(go_term) {
 
 #===================== SEMANTIC SIMILARITY ===============================
 
-# Create GOSemSimData object 
-go_sem_data <- godata("org.EcK12.eg.db", ont = "BP", computeIC = TRUE)
+# Create GOSemSimData object (the first arguement needs a bioconductor annotation package of the organism)
+# possible choices:
+# -Caenorhabditis elegans: org.Ce.eg.db
+# -Danio rerio: org.Dr.eg.db
+# -Drosophila melanogaster: org.Dm.eg.db
+# -Escherichia coli: org.EcK12.eg.db
+# -Gallus gallus: org.Gg.eg.db
+# -Homo sapiens: org.Hs.eg.db
+# -Mus musculus: org.Mm.eg.db
+# -Saccharomyces cerevisiae: org.Sc.sgd.db
+go_sem_data <- godata("org.Hs.eg.db", ont = "BP", computeIC = TRUE)
 
 # (Optional) Create a new object called clean_data_sub and subset only the desired dataframes (this is for quick testing)
 #clean_data_sub <- clean_data[c("A0A087WXM9", "A0A024RBG1", "A0A075B6H5")]
