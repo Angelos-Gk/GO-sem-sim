@@ -3,6 +3,7 @@
 start.time <- Sys.time()
 
 #===================== SETTING UP ===============================
+
 # Load required libraries
 library(GO.db)
 library(AnnotationDbi)
@@ -11,12 +12,25 @@ library(ontologySimilarity)
 library(GOSemSim)
 library(progress)
 
-# Load the GO OBO file and create a GO graph
-go_obo_file <- "C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/python/go-basic.obo"
+# Load the GO OBO file and create a GO graph (https://current.geneontology.org/ontology/go-basic.obo)
+# obo file info: 
+# -format-version: 1.2
+# -data-version: releases/2023-06-11
+go_obo_file <- "C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/data/go-basic.obo"
 go <- get_ontology(go_obo_file)
 
-# Load the GAF annotation file
-annotation_file <- "C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/python/goa_human.gaf"
+# Load the GAF annotation file (https://current.geneontology.org/products/pages/downloads.html)
+# list of gaf files:
+# -Caenorhabditis elegans: wb.gaf
+# -Danio rerio: zfin.gaf
+# -Drosophila melanogaster: fb.gaf
+# -Escherichia coli: ecocyc.gaf
+# -Gallus gallus: goa-chicken.gaf
+# -Homo sapiens: goa-human.gaf
+# -Mus musculus: mgi.gaf
+# -Saccharomyces cerevisiae: sgd.gaf
+
+annotation_file <- "C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/data/goa-human.gaf"
 
 # Read the GAF file while skipping header lines
 lines <- readLines(annotation_file)
@@ -33,6 +47,11 @@ annotations <- read.table(text = lines[data_start], sep = "\t", quote = "", comm
 
 # 1) Filter rows based on criteria: 'NOT' in Qualifier, Aspect not equal to 'C' or 'F'
 filtered_annotations <- annotations[!(grepl("NOT", annotations$Qualifier) | annotations$Aspect %in% c("C", "F")), ]
+
+# Always check how many proteins each species has and then chose DB  Object Types
+# keep only the rows that in the column DB Object Type have either the value "protein","protein_coding_gene" or "gene_product"
+# some organisms have only the "protein" DB Object Type
+filtered_annotations <- filtered_annotations[filtered_annotations$DB_Object_Type %in% c("protein"), ]
 
 # 2) Group annotations by DB Object ID
 grouped_annotations <- split(filtered_annotations, filtered_annotations$DB_Object_ID)
@@ -60,7 +79,7 @@ clean_data$A0A087WXM9
 #===================== GET GO TERMS LEVEL INFO ===============================
 
 # Read GO terms with levels from the file
-go_terms_with_level <- read.table("go_terms_with_levels.txt", sep="\t", col.names=c("GO.Term", "Level"), stringsAsFactors=FALSE)
+go_terms_with_level <- read.table("C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/data/go_terms_with_levels.txt", sep="\t", col.names=c("GO.Term", "Level"), stringsAsFactors=FALSE)
 
 # Convert GO terms to a named vector of levels
 go_levels <- setNames(go_terms_with_level$Level, go_terms_with_level$GO.Term)
@@ -77,13 +96,13 @@ get_level <- function(go_term) {
 #===================== SEMANTIC SIMILARITY ===============================
 
 # Create GOSemSimData object 
-go_sem_data <- godata("org.Hs.eg.db", ont = "BP", computeIC = TRUE)
+go_sem_data <- godata("org.EcK12.eg.db", ont = "BP", computeIC = TRUE)
 
-# Create a new object called clean_data_sub and subset only the desired dataframes (quick testing)
+# (Optional) Create a new object called clean_data_sub and subset only the desired dataframes (this is for quick testing)
 #clean_data_sub <- clean_data[c("A0A087WXM9", "A0A024RBG1", "A0A075B6H5")]
 
 # Create a new list to store filtered GO terms for each ID
-filtered_terms_list <- list()
+run1 <- list()
 
 # Initialize the progress bar
 pb <- progress_bar$new(
@@ -100,7 +119,7 @@ for (target_id in names(clean_data)) {
   
   # If there's only one GO term, keep it
   if (nrow(annotations_for_id) == 1) {
-    filtered_terms_list[[target_id]] <- annotations_for_id$GO_ID
+    run1[[target_id]] <- annotations_for_id$GO_ID
     pb$tick()  # Update the progress bar
     next
   }
@@ -126,7 +145,7 @@ for (target_id in names(clean_data)) {
     }
     
     sim_row <- sim_matrix[i, ]
-    similar_indices <- which(sim_row >= 0.4)
+    similar_indices <- which(sim_row >= 0.7) #similarity threshold
     similar_levels <- sapply(similar_indices, function(index) go_levels[go_terms[index]])
     similar_and_same_level <- similar_indices[similar_levels == go_levels[go_terms[i]]]
     
@@ -140,7 +159,7 @@ for (target_id in names(clean_data)) {
   }
   
   # Remove duplicates and store the kept terms
-  filtered_terms_list[[target_id]] <- unique(kept_terms)
+  run1[[target_id]] <- unique(kept_terms)
   
   pb$tick()  # Update the progress bar
 }
@@ -150,20 +169,20 @@ pb$terminate()
 
 #===================== TESTING =============================== 
 
-# In order to test, paste the clean data to revigo (http://revigo.irb.hr/) and compare results with 
-# the reduced_grouped_annotations results for each ID
+# In order to test, paste the clean data (for a certain ID) to revigo (http://revigo.irb.hr/) 
+# and compare results with the reduced_grouped_annotations results for each ID
 
 # Testing
-clean_data$A0A087WXM9$GO_ID
-filtered_terms_list$A0A087WXM9
+# clean_data$A0A385XJ53$GO_ID                            
+# run1$A0A385XJ53
 
 # Testing 
-clean_data$A0A024RBG1$GO_ID
-filtered_terms_list$A0A024RBG1
+# clean_data$A0A024RBG1$GO_ID                             
+# run1$A0A024RBG1
 
 # Testing
-clean_data$A0A075B6H5$GO_ID
-filtered_terms_list$A0A075B6H5
+# clean_data$A0A075B6H5$GO_ID
+# run1$A0A075B6H5
 
 sessionInfo()
 
