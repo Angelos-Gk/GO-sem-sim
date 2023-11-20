@@ -5,19 +5,11 @@ start.time <- Sys.time()
 #===================== SETTING UP ===============================
 
 # Load required libraries
-library(GO.db)
-library(AnnotationDbi)
-library(ontologyIndex)
-library(ontologySimilarity)
-library(GOSemSim)
 library(progress)
-
-# Load the GO OBO file and create a GO graph (https://current.geneontology.org/ontology/go-basic.obo)
-# obo file info: 
-# -format-version: 1.2
-# -data-version: releases/2023-06-11
-go_obo_file <- "C:/Users/angel/Desktop/Applied Bioinformatics/Thesis/pleiotropy/data/go-basic.obo"
-go <- get_ontology(go_obo_file)
+library(httr)
+library(rvest)
+library(dplyr)
+library(progress)
 
 # Load the GAF annotation file (https://current.geneontology.org/products/pages/downloads.html)
 # list of gaf files:
@@ -43,7 +35,7 @@ annotations <- read.table(text = lines[data_start], sep = "\t", quote = "", comm
                                         'Annotation_Extension', 'Gene_Product_Form_ID'),
                           stringsAsFactors = FALSE)
 
-#===================== FILTERING===============================
+#===================== FILTERING ===============================
 
 #NA ELEGXO PANTA POSA PROTEIN EXEI TO KATHE SPECIES KAI META NA DIALEGO DB Objects Types
 
@@ -77,12 +69,7 @@ for (target_id in names(grouped_annotations)) {
 
 clean_data$A0A087WXM9
 
-#===================== REVIGO API usage ================
-
-library(httr)
-library(rvest)
-library(dplyr)
-library(progress)
+#===================== REVIGO API CALL ===============================
 
 # Function to process a dataframe and get filtered GO terms and Dispensability values
 process_dataframe <- function(df, cutoff = 0.7) {
@@ -137,15 +124,70 @@ pb <- progress_bar$new(
 )
 
 # Process all dataframes in clean_data
-results <- lapply(names(clean_data), function(df_name) {
+results <- list()
+for (df_name in names(clean_data)) {
   df <- clean_data[[df_name]]
   result <- process_dataframe(df)
+  results[[df_name]] <- result
   pb$tick()  # Increment progress bar
-  return(result)
-})
+}
 
 # Terminate the progress bar
 pb$terminate()
 
-# Print the resulting list of data frames
-print(results)
+# View the resulting dataframe
+View(results)
+
+#===================== COUNT TERMS BEFORE AND AFTER REDUCTION =============================== 
+
+# clean_data
+# Combine the data frames into a single data frame
+combined_data <- bind_rows(clean_data)
+
+# Count the total number of GO IDs (including duplicates)
+total_go_ids1 <- nrow(combined_data)
+
+# Print the result
+print(total_go_ids1)
+
+# results
+combined_results <- bind_rows(results)
+total_go_ids2 <- nrow(combined_results)
+print(total_go_ids2)
+
+# human 135340 GO terms before reduction
+# human 110562 GO terms after reduction (SimRel, 0.7)
+
+#===================== SAVE THE OUTPUT =============================== 
+
+result_list <- results
+
+# Open a connection to the output file
+output_file <- file("human_simrel_7.txt", "w")
+
+# Loop through each element in the list
+for (i in seq_along(result_list)) {
+  # Extract the name and data frame from the list
+  name <- names(result_list)[i]
+  df <- result_list[[i]]
+  
+  # Count the number of rows in the data frame
+  num_GO_IDs <- nrow(df)
+  
+  # Combine the GO IDs into a single string separated by ";"
+  go_ids <- paste(df$`Term ID`, collapse = ";")
+  
+  # Write the information to the output file on a new line
+  cat(name, num_GO_IDs, go_ids, file = output_file)
+  cat("\n", file = output_file)
+}
+
+# Close the output file
+close(output_file)
+
+sessionInfo()
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+
